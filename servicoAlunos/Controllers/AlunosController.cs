@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using servicoAlunos.Models;
 
+
 [ApiController]
 [Route("api/[controller]")]
 public class AlunosController : ControllerBase
@@ -34,9 +35,9 @@ public class AlunosController : ControllerBase
         }
 
         // Verifica se Data_Nascimento é diferente de default(DateTime), então converte para Utc.
-        if (aluno.Data_Nascimento != default(DateTime))
+        if (aluno.Data_Nascimento_UTC != default(DateTime))
         {
-            aluno.Data_Nascimento = DateTime.SpecifyKind(aluno.Data_Nascimento, DateTimeKind.Utc);
+            aluno.Data_Nascimento_UTC = DateTime.SpecifyKind(aluno.Data_Nascimento_UTC, DateTimeKind.Utc);
         }
 
         _context.Alunos.Add(aluno);
@@ -54,29 +55,39 @@ public class AlunosController : ControllerBase
     }
 
     // Rota: PUT api/alunos/atualiza_alunos/5
-    [HttpPut("atualiza_alunos/{id}")]
-    public async Task<IActionResult> AtualizaAlunos(int id, [FromBody] Aluno alunoAtualizado)
+[HttpPut("atualiza_alunos/{id}")]
+public async Task<IActionResult> AtualizaAlunos(int id, [FromBody] Aluno alunoAtualizado)
+{
+    if (alunoAtualizado == null || alunoAtualizado.Id != id)
     {
-        if (alunoAtualizado == null || alunoAtualizado.Id != id)
-        {
-            return BadRequest("Dados inválidos para o aluno.");
-        }
-
-        var alunoExistente = await _context.Alunos.FindAsync(id);
-        if (alunoExistente == null)
-        {
-            return NotFound();
-        }
-
-        alunoExistente.Nome = alunoAtualizado.Nome;
-        alunoExistente.CPF = alunoAtualizado.CPF;
-        alunoExistente.Email = alunoAtualizado.Email;
-
-        _context.Entry(alunoExistente).State = EntityState.Modified;
-        await _context.SaveChangesAsync();
-
-        return NoContent();
+        return BadRequest("Dados inválidos para o aluno.");
     }
+
+    var alunoExistente = await _context.Alunos.FindAsync(id);
+    if (alunoExistente == null)
+    {
+        return NotFound();
+    }
+
+    // Atualize a propriedade Data_Nascimento com o Kind correto (UTC)
+    alunoExistente.Nome = alunoAtualizado.Nome;
+    alunoExistente.CPF = alunoAtualizado.CPF;
+    alunoExistente.Email = alunoAtualizado.Email;
+    alunoExistente.Curso_Id = alunoAtualizado.Curso_Id;
+    alunoExistente.Libera_Conteudo = alunoAtualizado.Libera_Conteudo;
+    alunoExistente.Data_Nascimento_UTC = DateTime.SpecifyKind(alunoAtualizado.Data_Nascimento_UTC, DateTimeKind.Utc);
+
+    _context.Entry(alunoExistente).State = EntityState.Modified;
+    await _context.SaveChangesAsync();
+
+    return NoContent();
+}
+
+
+
+
+
+
 
     // Rota: DELETE api/alunos/remove_alunos/5
     [HttpDelete("remove_alunos/{id}")]

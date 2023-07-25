@@ -7,6 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL;
 using System;
 using System.Text;
 using servicoAlunos.Models;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +18,11 @@ builder.Services.AddDbContext<AlunosContext>(options =>
     options.UseNpgsql(connectionString));
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter("America/Sao_Paulo")); // Substitua "America/Sao_Paulo" pelo fuso horário desejado.
+    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+});
 
 // Configure Swagger
 builder.Services.AddSwaggerGen(c =>
@@ -27,7 +32,7 @@ builder.Services.AddSwaggerGen(c =>
     // Adicionar a inclusão dos comentários XML na documentação Swagger (opcional)
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = System.IO.Path.Combine(AppContext.BaseDirectory, xmlFile);
-   // c.IncludeXmlComments(xmlPath);
+    // c.IncludeXmlComments(xmlPath);
 });
 
 // Add authentication with JWT
